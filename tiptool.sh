@@ -100,16 +100,18 @@ function printStats() {
 	printf 'Percent   %7.0f         %7.0f      %7.0f\n' `calcPercent ${2} ${totalCount}` `calcPercent ${3} ${totalTokens}`  `calcPercent ${3} ${totalTokens}`
 }
 
+function printSubStatsHeading() {
+	printf '  Count        %%   Tokens        %%   Dollars  == %s\n' "${1}"
+}
+
 # Params: title matchCount matchTokens
 function printSubStats() {
-	printf '            Count          Tokens         Dollars   == %s\n' "${1}"
-	printf 'Match     %7d         %7d         %7.2f\n' ${2} ${3} `calcCost ${3}`
-	printf 'Percent   %7.0f         %7.0f      %7.0f\n' `calcPercent ${2} ${totalCount}` `calcPercent ${3} ${totalTokens}`  `calcPercent ${3} ${totalTokens}`
+	printf '%7d  %7.0f  %7d  %7.0f   %7.2f  == %s\n' ${2}  `calcPercent ${2} ${totalCount}` ${3}  `calcPercent ${3} ${totalTokens}` `calcCost ${3}` "${1}"
 }
 
 # Params: title matchTokens
 function printRankStats() {
-	printf '%7.0f%%  %7d tokens    %s\n' `calcPercent ${2} ${totalTokens}` ${2} "${1}"
+	printf '%7d tokens     %7.0f%%     $%7.2f     %s\n' "${2}" `calcPercent ${2} ${totalTokens}` `calcCost ${2}` "${1}"
 }
 
 # Add a tip read in from the input to the tip file
@@ -418,18 +420,21 @@ done < "${TIPFILE}"
 
 # Print date groupings
 if [[ ${GROUPBYYEAR} -eq 1 ]] ; then
+	printSubStatsHeading  "Tips Grouped By Year"
 	for key in `echo ${!gbYearCount[*]} | tr ' ' '\n' | sort`
 	do
 		printSubStats "Year ${key}" ${gbYearCount[$key]} ${gbYearTokens[$key]}
 	done
 fi
 if [[ ${GROUPBYMONTH} -eq 1 ]] ; then
+	printSubStatsHeading  "Tips Grouped By Month"
 	for key in `echo ${!gbMonthCount[*]} | tr ' ' '\n' | sort`
 	do
 		printSubStats "Month ${key}" ${gbMonthCount[$key]} ${gbMonthTokens[$key]}
 	done
 fi
 if [[ ${GROUPBYDAY} -eq 1 ]] ; then
+	printSubStatsHeading  "Tips Grouped By Day"
 	for key in `echo ${!gbDayCount[*]} | tr ' ' '\n' | sort`
 	do
 		printSubStats "Day ${key}" ${gbDayCount[$key]} ${gbDayTokens[$key]}
@@ -438,6 +443,7 @@ fi
 
 # Print camgirl groupings
 if [[ ${GROUPBYCAMGIRL} -eq 1 ]] ; then
+	printSubStatsHeading "Tips Grouped By Camgirl"
 	for key in `echo ${!gbCamGirlCount[*]} | tr ' ' '\n' | sort`
 	do
 		printSubStats "Camgirl ${key}" ${gbCamGirlCount[$key]} ${gbCamGirlTokens[$key]}
