@@ -93,7 +93,7 @@ function calcCost() {
 	echo "${1} * ${TOKEN_COST}" | bc -l
 }
 
-# Params: title matchCount matchTokens groupCount
+# Params: title matchCount matchTokens groupByCount
 function printStats() {
 	printf '\n=== %s\n' "${1}"
 	printf '            Count          Tokens         Dollars\n'
@@ -105,7 +105,6 @@ function printStats() {
 	then
 		printf 'Average   %7d         %7d          %7.2f\n' $((${totalCount} / ${4})) $(($totalTokens / ${4})) `calcCost $((${totalTokens} / ${4}))`
 	fi
-
 }
 
 function printSubStatsHeading() {
@@ -478,7 +477,7 @@ if [[ ${GROUPBYCAMGIRL} -eq 1 ]] ; then
 	do
 		printSubStats "Camgirl ${key}" ${gbCamGirlCount[$key]} ${gbCamGirlTokens[$key]}
 	done
-	groupByCount=${#gbCamgirlCount[@]}
+	groupByCount=${#gbCamGirlCount[@]}
 fi
 
 # Print camgirl rank
@@ -489,6 +488,7 @@ if [[ ${RANKCAMGIRLS} -eq 1 ]] ; then
 	do
 		printRankStats "${key}" ${gbCamGirlTokens[$key]} >>  ${RANKTIPFILE}
 	done
+	groupByCount=${#gbCamGirlTokens[@]}
 	cat ${RANKTIPFILE} | sort -n -r -b | nl -s " " -b a -n rn -
 fi
 
