@@ -66,6 +66,8 @@ These options will print subtotals
    --groupby-year
     -gm                       Group by month
    --groupby-month
+    -gw                       Group by week
+   --groupby-week
     -gd                       Group by day
    --groupby-day
 
@@ -91,13 +93,19 @@ function calcCost() {
 	echo "${1} * ${TOKEN_COST}" | bc -l
 }
 
-# Params: title matchCount matchTokens
+# Params: title matchCount matchTokens groupCount
 function printStats() {
 	printf '\n=== %s\n' "${1}"
 	printf '            Count          Tokens         Dollars\n'
 	printf 'Match     %7d         %7d         %7.2f\n' ${2} ${3} `calcCost ${3}`
 	printf 'Total     %7d         %7d         %7.2f\n' $totalCount $totalTokens `calcCost ${totalTokens}`
 	printf 'Percent   %7.0f         %7.0f      %7.0f\n' `calcPercent ${2} ${totalCount}` `calcPercent ${3} ${totalTokens}`  `calcPercent ${3} ${totalTokens}`
+
+	if [ ${4} -gt 0 ]
+	then
+		printf 'Average   %7d         %7d          %7.2f\n' $((${totalCount} / ${4})) $(($totalTokens / ${4})) `calcCost $((${totalTokens} / ${4}))`
+	fi
+
 }
 
 function printSubStatsHeading() {
@@ -162,7 +170,6 @@ function addTip() {
 # determining what kind of line it is
 function addTips() {
 	echo "Adding rows"
-
 	if [[ -f "${TIPFILE}" ]] ; then
 		cp "${TIPFILE}" "${TMPTIPFILE}"
 	else
@@ -324,6 +331,11 @@ do
 			declare -A gbMonthCount
 			declare -A gbMonthTokens
 			;;
+		-gw|--groupby-week)
+			GROUPBYWEEK=1
+			declare -A gbWeekCount
+			declare -A gbWeekTokens
+			;;
 		-gd|--groupby-day)
 			GROUPBYDAY=1
 			declare -A gbDayCount
@@ -358,6 +370,8 @@ done
 # Read each record and process it
 matchCount=0
 matchTokens=0
+groupByCount=0
+
 while read year month day hour minute second type camgirl tokens note
 do
 	# Does this record match the filter criteria?
@@ -405,6 +419,11 @@ do
 			gbMonthCount[${year}.${month}]=$((gbMonthCount[${year}.${month}] + 1))
 			gbMonthTokens[${year}.${month}]=$((gbMonthTokens[${year}.${month}] + $tokens))
 		fi
+		if [[ ${GROUPBYWEEK} -eq 1 ]] ; then
+			week=`date -d "${year}${month}${day}" '+%U'`
+			gbWeekCount[${year}.${week}]=$((gbWeekCount[${year}.${week}] + 1))
+			gbWeekTokens[${year}.${week}]=$((gbWeekTokens[${year}.${week}] + $tokens))
+		fi
 		if [[ ${GROUPBYDAY} -eq 1 ]] ; then
 			gbDayCount[${year}.${month}.${day}]=$((gbDayCount[${year}.${month}.${day}] + 1))
 			gbDayTokens[${year}.${month}.${day}]=$((gbDayTokens[${year}.${month}.${day}] + $tokens))
@@ -425,6 +444,7 @@ if [[ ${GROUPBYYEAR} -eq 1 ]] ; then
 	do
 		printSubStats "Year ${key}" ${gbYearCount[$key]} ${gbYearTokens[$key]}
 	done
+	groupByCount=${#gbYearCount[@]}
 fi
 if [[ ${GROUPBYMONTH} -eq 1 ]] ; then
 	printSubStatsHeading  "Tips Grouped By Month"
@@ -432,6 +452,15 @@ if [[ ${GROUPBYMONTH} -eq 1 ]] ; then
 	do
 		printSubStats "Month ${key}" ${gbMonthCount[$key]} ${gbMonthTokens[$key]}
 	done
+	groupByCount=${#gbMonthCount[@]}
+fi
+if [[ ${GROUPBYWEEK} -eq 1 ]] ; then
+	printSubStatsHeading  "Tips Grouped By Week"
+	for key in `echo ${!gbWeekCount[*]} | tr ' ' '\n' | sort`
+	do
+		printSubStats "Week ${key}" ${gbWeekCount[$key]} ${gbWeekTokens[$key]}
+	done
+	groupByCount=${#gbWeekCount[@]}
 fi
 if [[ ${GROUPBYDAY} -eq 1 ]] ; then
 	printSubStatsHeading  "Tips Grouped By Day"
@@ -439,6 +468,7 @@ if [[ ${GROUPBYDAY} -eq 1 ]] ; then
 	do
 		printSubStats "Day ${key}" ${gbDayCount[$key]} ${gbDayTokens[$key]}
 	done
+	groupByCount=${#gbDayCount[@]}
 fi
 
 # Print camgirl groupings
@@ -448,6 +478,7 @@ if [[ ${GROUPBYCAMGIRL} -eq 1 ]] ; then
 	do
 		printSubStats "Camgirl ${key}" ${gbCamGirlCount[$key]} ${gbCamGirlTokens[$key]}
 	done
+	groupByCount=${#gbCamgirlCount[@]}
 fi
 
 # Print camgirl rank
@@ -462,7 +493,7 @@ if [[ ${RANKCAMGIRLS} -eq 1 ]] ; then
 fi
 
 # Print totals
-printStats "TOTALS" ${matchCount} ${matchTokens}
+printStats "TOTALS" ${matchCount} ${matchTokens} ${groupByCount}
 
 
 
