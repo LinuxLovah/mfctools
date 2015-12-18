@@ -78,7 +78,18 @@ Ranking (list highest to lowest)
 Other options
     -h                        Print this help text
     -v                        Verbose mode
-    -r                        Print out all matching records, not just totals
+    -r                        Print out all matching records, not just totals.  
+                              If you add Buy or Balance lines to the input, it will display a running balance of tokens in the last field. 
+                              Note that totals will be inaccurate if not all records match
+    
+Example lines to feed into -at or -rt (the Tip lines match the format of MFC's Token Usage report, with or without tip notes.  The Balance and Buy lines should be entered by hand):
+Dec 13th, 2015, 11:05:16	Balance	none	30
+Dec 13th, 2015, 11:05:16	Buy none	900
+Dec 15th, 2015, 08:47:56	Tip	ModelOne	50	
+Dec 15th, 2015, 08:48:56	Tip	ModelTwo	40
+This is a tip note line, right after the tip line, just like in MFC's tip log
+Dec 15th, 2015, 08:49:56	Tip	ModelThree	40
+
 
 HELPHEREDOC
 exit
@@ -103,7 +114,7 @@ function printStats() {
 
 	if [ ${4} -gt 0 ]
 	then
-		printf 'Average   %7d         %7d          %7.2f\n' $((${totalCount} / ${4})) $(($totalTokens / ${4})) `calcCost $((${totalTokens} / ${4}))`
+		printf 'Average   %7d         %7d          %7.2f\n' $((${2} / ${4})) $((${3} / ${4})) `calcCost $((${3} / ${4}))`
 	fi
 }
 
@@ -185,7 +196,17 @@ function addTips() {
 		fi
 
 		# Identify the kind of line last read
-		if [[ ${lineIn[0]} =~ [A-Z][a-z][a-z] &&  ${lineIn[1]} =~ [0-9][0-9stndrd,]+ &&  ${lineIn[2]} =~ [0-9]{4}[,] ]] ; then
+		if [[ ${lineIn[4]} =~ "(Buy|Balance)" ]] ; then
+			addTip
+			month=${lineIn[0]}
+			day=${lineIn[1]}
+			year=${lineIn[2]}
+			time=${lineIn[3]}
+			type=${lineIn[4]}
+			camgirl="none"
+			tokens=${lineIn[5]}
+			note="none"
+		elif [[ ${lineIn[0]} =~ [A-Z][a-z][a-z] &&  ${lineIn[1]} =~ [0-9][0-9stndrd,]+ &&  ${lineIn[2]} =~ [0-9]{4}[,] ]] ; then
 			addTip
 			month=${lineIn[0]}
 			day=${lineIn[1]}
@@ -370,6 +391,7 @@ done
 matchCount=0
 matchTokens=0
 groupByCount=0
+balance=0
 
 while read year month day hour minute second type camgirl tokens note
 do
@@ -404,36 +426,52 @@ do
 	# Process the record
 	if [[ $isMatch -eq 1 ]] ; then
 		if [[ $PRINT_RECORDS -eq 1 ]] ; then
-			echo "[$year|$month|$day|$hour|$minute|$second|$type|$camgirl|$tokens|$note]"
+			echo "[$year|$month|$day|$hour|$minute|$second|$type|$camgirl|$tokens|$note|$balance]"
 		fi
-		matchCount=$(($matchCount + 1))
-		matchTokens=$(($matchTokens + $tokens))
-
-		# Grouping operations
-		if [[ ${GROUPBYYEAR} -eq 1 ]] ; then
-			gbYearCount[${year}]=$((gbYearCount[${year}] + 1))
-			gbYearTokens[${year}]=$((gbYearTokens[${year}] + $tokens))
-		fi
-		if [[ ${GROUPBYMONTH} -eq 1 ]] ; then
-			gbMonthCount[${year}.${month}]=$((gbMonthCount[${year}.${month}] + 1))
-			gbMonthTokens[${year}.${month}]=$((gbMonthTokens[${year}.${month}] + $tokens))
-		fi
-		if [[ ${GROUPBYWEEK} -eq 1 ]] ; then
-			week=`date -d "${year}${month}${day}" '+%U'`
-			gbWeekCount[${year}.${week}]=$((gbWeekCount[${year}.${week}] + 1))
-			gbWeekTokens[${year}.${week}]=$((gbWeekTokens[${year}.${week}] + $tokens))
-		fi
-		if [[ ${GROUPBYDAY} -eq 1 ]] ; then
-			gbDayCount[${year}.${month}.${day}]=$((gbDayCount[${year}.${month}.${day}] + 1))
-			gbDayTokens[${year}.${month}.${day}]=$((gbDayTokens[${year}.${month}.${day}] + $tokens))
-		fi
-		if [[ ${GROUPBYCAMGIRL} -eq 1 || ${RANKCAMGIRLS} -eq 1 ]] ; then
-			gbCamGirlCount[$camgirl]=$((gbCamGirlCount[$camgirl] + 1))
-			gbCamGirlTokens[$camgirl]=$((gbCamGirlTokens[$camgirl] + $tokens))
+		
+		if [[ "${type}" == "Buy" ]] ; then
+			balance=$((balance + $tokens))
+		elif [[ "${type}" == "Balance" ]] ; then
+			balance="${tokens}"
+		elif [[ "${type}" == "Transfer" ]] ; then
+			balance=$((balance - $tokens))
+		elif [[ "${type}" == "Tip" ]] ; then
+			matchCount=$(($matchCount + 1))
+			matchTokens=$(($matchTokens + $tokens))
+			balance=$((balance - $tokens))
+	
+			# Grouping operations
+			if [[ ${GROUPBYYEAR} -eq 1 ]] ; then
+				gbYearCount[${year}]=$((gbYearCount[${year}] + 1))
+				gbYearTokens[${year}]=$((gbYearTokens[${year}] + $tokens))
+			fi
+			if [[ ${GROUPBYMONTH} -eq 1 ]] ; then
+				gbMonthCount[${year}.${month}]=$((gbMonthCount[${year}.${month}] + 1))
+				gbMonthTokens[${year}.${month}]=$((gbMonthTokens[${year}.${month}] + $tokens))
+			fi
+			if [[ ${GROUPBYWEEK} -eq 1 ]] ; then
+				week=`date -d "${year}${month}${day}" '+%U'`
+				gbWeekCount[${year}.${week}]=$((gbWeekCount[${year}.${week}] + 1))
+				gbWeekTokens[${year}.${week}]=$((gbWeekTokens[${year}.${week}] + $tokens))
+			fi
+			if [[ ${GROUPBYDAY} -eq 1 ]] ; then
+				gbDayCount[${year}.${month}.${day}]=$((gbDayCount[${year}.${month}.${day}] + 1))
+				gbDayTokens[${year}.${month}.${day}]=$((gbDayTokens[${year}.${month}.${day}] + $tokens))
+			fi
+			if [[ ${GROUPBYCAMGIRL} -eq 1 || ${RANKCAMGIRLS} -eq 1 ]] ; then
+				gbCamGirlCount[$camgirl]=$((gbCamGirlCount[$camgirl] + 1))
+				gbCamGirlTokens[$camgirl]=$((gbCamGirlTokens[$camgirl] + $tokens))
+			fi
 		fi
 	fi
 	totalCount=$(($totalCount + 1))
 	totalTokens=$(($totalTokens + $tokens))
+	
+	# No negative balance
+	if [[ ${balance} -lt 0 ]] ; then
+		balance=0
+	fi
+	
 done < "${TIPFILE}"
 
 # Print date groupings
