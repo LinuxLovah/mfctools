@@ -425,10 +425,6 @@ do
 
 	# Process the record
 	if [[ $isMatch -eq 1 ]] ; then
-		if [[ $PRINT_RECORDS -eq 1 ]] ; then
-			echo "[$year|$month|$day|$hour|$minute|$second|$type|$camgirl|$tokens|$note|$balance]"
-		fi
-		
 		if [[ "${type}" == "Buy" ]] ; then
 			balance=$((balance + $tokens))
 		elif [[ "${type}" == "Balance" ]] ; then
@@ -463,14 +459,17 @@ do
 				gbCamGirlTokens[$camgirl]=$((gbCamGirlTokens[$camgirl] + $tokens))
 			fi
 		fi
+
+		# No negative balance
+		if [[ ${balance} -lt 0 ]] ; then
+			balance=0
+		fi
+		if [[ $PRINT_RECORDS -eq 1 ]] ; then
+			echo "[$year|$month|$day|$hour|$minute|$second|$type|$camgirl|$tokens|$note|$balance]"
+		fi
 	fi
 	totalCount=$(($totalCount + 1))
 	totalTokens=$(($totalTokens + $tokens))
-	
-	# No negative balance
-	if [[ ${balance} -lt 0 ]] ; then
-		balance=0
-	fi
 	
 done < "${TIPFILE}"
 
