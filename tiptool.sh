@@ -526,7 +526,7 @@ if [[ ${RANKCAMGIRLS} -eq 1 ]] ; then
 		printRankStats "${key}" ${gbCamGirlTokens[$key]} >>  ${RANKTIPFILE}
 	done
 	groupByCount=${#gbCamGirlTokens[@]}
-	cat ${RANKTIPFILE} | sort -n -r -b | nl -s " " -b a -n rn -
+	cat ${RANKTIPFILE} | sort -n -r -b | nl -s " " -b a -n rn
 fi
 
 # Print totals
