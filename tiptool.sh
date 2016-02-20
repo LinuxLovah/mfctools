@@ -431,7 +431,7 @@ do
 			balance="${tokens}"
 		elif [[ "${type}" == "Transfer" ]] ; then
 			balance=$((balance - $tokens))
-		elif [[ "${type}" == "Tip" ]] ; then
+		elif [[ "${type}" == "Tip" || "${type}" == "GroupShow" || "${type}" == "Private" || "${type}" == "Voyeur" ]] ; then
 			matchCount=$(($matchCount + 1))
 			matchTokens=$(($matchTokens + $tokens))
 			balance=$((balance - $tokens))
