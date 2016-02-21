@@ -431,7 +431,7 @@ do
 			balance="${tokens}"
 		elif [[ "${type}" == "Transfer" ]] ; then
 			balance=$((balance - $tokens))
-		elif [[ "${type}" == "Tip" ]] ; then
+		elif [[ "${type}" == "Tip" || "${type}" == "GroupShow" || "${type}" == "Private" || "${type}" == "Voyeur" ]] ; then
 			matchCount=$(($matchCount + 1))
 			matchTokens=$(($matchTokens + $tokens))
 			balance=$((balance - $tokens))
@@ -526,7 +526,7 @@ if [[ ${RANKCAMGIRLS} -eq 1 ]] ; then
 		printRankStats "${key}" ${gbCamGirlTokens[$key]} >>  ${RANKTIPFILE}
 	done
 	groupByCount=${#gbCamGirlTokens[@]}
-	cat ${RANKTIPFILE} | sort -n -r -b | nl -s " " -b a -n rn -
+	cat ${RANKTIPFILE} | sort -n -r -b | nl -s " " -b a -n rn
 fi
 
 # Print totals
