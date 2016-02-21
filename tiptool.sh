@@ -79,8 +79,10 @@ Other options
     -h                        Print this help text
     -v                        Verbose mode
     -r                        Print out all matching records, not just totals.  
-                              If you add Buy or Balance lines to the input, it will display a running balance of tokens in the last field. 
+    --print_records           If you add Buy or Balance lines to the input, it will display a running balance of tokens in the last field. 
                               Note that totals will be inaccurate if not all records match
+    -nr                       Print out all non-matching records, not just totals.
+    --print_reverse_records
     
 Example lines to feed into -at or -rt (the Tip lines match the format of MFC's Token Usage report, with or without tip notes.  The Balance and Buy lines should be entered by hand):
 Dec 13th, 2015, 11:05:16	Balance	none	30
@@ -333,8 +335,11 @@ do
 			SEARCH_ALL="$1"
 			shift
 			;;
-		-r|--PRINT_RECORDS)
+		-r|--print_records)
 			PRINT_RECORDS=1
+			;;
+		-rr|--print_reverse_records)
+			PRINT_REVERSE_RECORDS=1
 			;;
 		-gc|--groupby-camgirl)
 			GROUPBYCAMGIRL=1
@@ -388,6 +393,8 @@ done
 
 
 # Read each record and process it
+totalCount=0
+totalTokens=0
 matchCount=0
 matchTokens=0
 groupByCount=0
@@ -465,6 +472,10 @@ do
 			balance=0
 		fi
 		if [[ $PRINT_RECORDS -eq 1 ]] ; then
+			echo "[$year|$month|$day|$hour|$minute|$second|$type|$camgirl|$tokens|$note|$balance]    [$matchCount|$totalCount|"
+		fi
+	else
+		if [[ $PRINT_REVERSE_RECORDS -eq 1 ]] ; then
 			echo "[$year|$month|$day|$hour|$minute|$second|$type|$camgirl|$tokens|$note|$balance]"
 		fi
 	fi
