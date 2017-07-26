@@ -193,12 +193,14 @@ function addTips() {
 	#while read month day year time type camgirl tokens extra
 	while [[ "${lineIn[0]}" != "" ]]
 	do
+		 
 		if [ "${DEBUG_MODE}" != "" ] ; then
-			echo "READING [${lineIn[*]}]"
+			echo "READING [${lineIn[0]}|${lineIn[1]}|${lineIn[2]}|${lineIn[3]}|${lineIn[4]}|${lineIn[5]}|${lineIn[6]}|${lineIn[7]}|${lineIn[8]}|${lineIn[9]}|${lineIn[10]}|${lineIn[11]}|${lineIn[12]}] length=${#lineIn[*]}"
 		fi
-
+		
 		# Identify the kind of line last read
 		if [[ ${lineIn[4]} =~ "(Buy|Balance)" ]] ; then
+			# Add the previously read tip
 			addTip
 			month=${lineIn[0]}
 			day=${lineIn[1]}
@@ -209,6 +211,7 @@ function addTips() {
 			tokens=${lineIn[5]}
 			note="none"
 		elif [[ ${lineIn[0]} =~ [A-Z][a-z][a-z] &&  ${lineIn[1]} =~ [0-9][0-9stndrd,]+ &&  ${lineIn[2]} =~ [0-9]{4}[,] ]] ; then
+			# Add the previously read tip
 			addTip
 			month=${lineIn[0]}
 			day=${lineIn[1]}
@@ -218,6 +221,15 @@ function addTips() {
 			# The type field can have spaces in it, so however many fields past 7 there are, we need to add them to type
 			fieldPtr=4
 			typeFieldLast=$((${#lineIn[*]} - 3))
+			# If this a combined tip, remove the last 4 fields: |(combined|single|token|tip)"
+			if [[ "${lineIn[7]}" == "(combined" ]] ; then
+				typeFieldLast=$((${typeFieldLast} - 4))
+				unset 'lineIn[7]'
+				unset 'lineIn[8]'
+				unset 'lineIn[9]'
+				unset 'lineIn[10]'
+				echo "Fixing combined tip  [${lineIn[0]}|${lineIn[1]}|${lineIn[2]}|${lineIn[3]}|${lineIn[4]}|${lineIn[5]}|${lineIn[6]}|${lineIn[7]}|${lineIn[8]}|${lineIn[9]}|${lineIn[10]}|${lineIn[11]}|${lineIn[12]}] length=${#lineIn[*]}"
+			fi
 			# There will be an extra field for public/private if type is Transfer
 			if [[ "${lineIn[5]}" == "Transfer" ]] ; then
 				typeFieldLast=$((typeFieldLast - 1))
@@ -402,6 +414,9 @@ balance=0
 
 while read year month day hour minute second type camgirl tokens note
 do
+	if [ "${DEBUG_MODE}" != "" ] ; then
+		echo "READING |${year}[${month}|${day}|${hour}|${minute}|${second}|${type}|${camgirl}|${tokens}|${note}] row ${totalCount}"
+	fi
 	# Does this record match the filter criteria?
 	isMatch=1
 	if [[ "${SEARCH_YEAR}" != "" && ! ${year} =~ ${SEARCH_YEAR} ]] ; then
@@ -427,6 +442,11 @@ do
 	fi
 	if [[ "${SEARCH_ALL}" != "" && ! "$year $month $day $hour $minute $second $type $camgirl $tokens $note" =~ ${SEARCH_ALL} ]] ; then
 		isMatch=0
+	fi
+	if [ "${DEBUG_MODE}" != "" ] ; then
+		if [[ $isMatch -eq 1 ]] ; then
+			echo "\tMATCH";
+		fi
 	fi
 
 
