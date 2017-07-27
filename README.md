@@ -1,7 +1,7 @@
 # mfctools by LinxuLovah
 Tools to be used in conjunction with MyFreeCams
 
-##tiptool.sh bash script
+## tiptool.sh bash script
 ```
 Stores MyFreeCams tips and performs statistical reporting.
 Tip information is stored in ${TIPFILE}
