@@ -23,6 +23,9 @@ ${CMDNAME}
 Stores MyFreeCams tips and performs statistical reporting.
 Tip information is stored in ${TIPFILE}
 
+Camgirl synonyms (from name changes) are stored in ${SYNONYMFILE} one per line, 
+with the old name and the new name separated by a space or tab.
+
 Adding tips:
     -at
    --add-tips                Reads the copied-and-pasted contents of the MFC
@@ -256,6 +259,20 @@ function addTips() {
 			fieldPtr=$((fieldPtr + 1))
 			tokens=${lineIn[$fieldPtr]}
 			note=""
+			
+			# Substitute camgirl if list is present
+			if [[ ${synonymCount} > 0 ]] ; then
+				index=0
+				while [[ "$index" -lt ${synonymCount} ]] ; do
+					if [[ "${camgirl}" == "${synonymTarget[index]}" ]] ; then
+						if [ "${DEBUG_MODE}" != "" ] ; then
+							echo "     Substituting ${camgirl} with ${synonymSubstitution[index]}"
+						fi
+						camgirl="${synonymSubstitution[index]}"
+					fi
+					index=$((index + 1))
+				done
+			fi
 		else
 			if [ "${DEBUG_MODE}" != "" ] ; then
 				echo "     Tip note line"
@@ -303,7 +320,26 @@ TIPFILE="${TIPTOOL_HOME}/tips.txt"
 TMPTIPFILE="${TIPFILE}.tmp"
 RANKTIPFILE="${TIPFILE}.rank"
 
+# Do we have any camgirl synonyms to translate one name to another, when they change their name?
+SYNONYMFILE="${TIPTOOL_HOME}/camgirl_synonyms.txt"
+declare -a synonymTarget
+declare -a synonymSubstitution
+synonymCount=0
 
+if [[ -f "${SYNONYMFILE}" ]] ; then
+	##### readarray synonyms < "${SYNONYMFILE}"
+	index=0
+	while read old new ; do
+		synonymTarget[$index]="${old}"
+		synonymSubstitution[$index]="${new}"
+		# This happens before debug mode is checked so we can't conditionally print it.
+		# echo "Synonym ${index} loaded: '${synonymTarget[index]}' --> '${synonymSubstitution[index]}'"
+		index=$((index + 1))
+	done < "${SYNONYMFILE}"
+	synonymCount=${#synonymTarget[*]}
+fi
+
+# Process command line
 while [[ $# -gt 0 ]]
 do
 	key="$1"
