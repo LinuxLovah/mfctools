@@ -4,7 +4,10 @@ Tools to be used in conjunction with MyFreeCams
 ## tiptool.sh bash script
 ```
 Stores MyFreeCams tips and performs statistical reporting.
-Tip information is stored in ${TIPFILE}
+Tip information is stored in ${HOME}/.tiptool/tips.txt
+
+Camgirl synonyms (from name changes) are stored in ${HOME}/.tiptool/camgirl_synonyms.txt one per line, 
+with the old name and the new name separated by a space or tab.
 
 Adding tips:
     -at
